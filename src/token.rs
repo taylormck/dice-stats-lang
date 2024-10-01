@@ -35,6 +35,7 @@ impl Token {
 #[derive(Debug)]
 pub enum TokenError {
     UnsupportedToken(String),
+    InvalidNumberToken(String),
 }
 
 pub fn read_token(
@@ -75,6 +76,22 @@ pub fn read_token(
             '*' => Some(Token::new(TokenType::Star, *current_line, *current_column)),
             '/' => Some(Token::new(TokenType::Slash, *current_line, *current_column)),
             '.' => Some(Token::new(TokenType::Dot, *current_line, *current_column)),
+            first_digit if first_digit.is_ascii_digit() => {
+                *current_column += 1;
+                let mut n = vec![first_digit];
+
+                while input.peek().is_some() {
+                    n.push(input.next().unwrap());
+                    *current_column += 1;
+                }
+
+                let n = n.into_iter().collect::<String>();
+
+                match n.parse() {
+                    Ok(n) => Some(Token::new(TokenType::Int(n), *current_line, *current_line)),
+                    Err(_) => return Err(TokenError::InvalidNumberToken(n)),
+                }
+            }
             c => return Err(TokenError::UnsupportedToken(String::from(c))),
         };
 
