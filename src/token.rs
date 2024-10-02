@@ -1,6 +1,6 @@
 use std::{iter::Peekable, str::Chars};
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TokenType {
     Operator(OperatorTokenType),
     Literal(LiteralTokenType),
@@ -21,13 +21,14 @@ pub enum OperatorTokenType {
     Eof,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum LiteralTokenType {
     Int(i32),
     Die(bool),
+    Unrecognized(String),
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Token {
     pub token_type: TokenType,
     pub line: usize,
@@ -134,6 +135,36 @@ pub fn read_token(
                     Err(_) => return Err(TokenError::InvalidNumberToken(n)),
                 }
             }
+            first_char if first_char.is_ascii_alphabetic() => {
+                let starting_column = *current_column;
+
+                let mut chars = vec![first_char];
+
+                while input.peek().is_some() && is_keyword_character(input.peek().unwrap()) {
+                    chars.push(input.next().unwrap());
+                    *current_column += 1;
+                }
+
+                let literal = chars.into_iter().collect::<String>();
+
+                match literal.as_str() {
+                    "d" => Some(Token::new(
+                        TokenType::Literal(LiteralTokenType::Die(false)),
+                        *current_line,
+                        starting_column,
+                    )),
+                    "die" => Some(Token::new(
+                        TokenType::Literal(LiteralTokenType::Die(true)),
+                        *current_line,
+                        starting_column,
+                    )),
+                    _ => Some(Token::new(
+                        TokenType::Literal(LiteralTokenType::Unrecognized(literal)),
+                        *current_line,
+                        starting_column,
+                    )),
+                }
+            }
             c => return Err(TokenError::UnsupportedToken(String::from(c))),
         };
 
@@ -149,6 +180,10 @@ pub fn read_token(
         *current_line,
         *current_column,
     ))
+}
+
+fn is_keyword_character(c: &char) -> bool {
+    c.is_ascii_alphabetic() || *c == '_'
 }
 
 #[cfg(test)]
@@ -199,6 +234,32 @@ mod tests {
             Token::new(TokenType::Literal(LiteralTokenType::Int(1234)), 1, 6),
             Token::new(TokenType::Operator(OperatorTokenType::Minus), 1, 11),
             Token::new(TokenType::Literal(LiteralTokenType::Int(420)), 1, 12),
+        ];
+
+        let mut actual_tokens: Vec<Token> = vec![];
+
+        let mut current_line = 1;
+        let mut current_column = 1;
+
+        while input.peek().is_some() {
+            let token = read_token(&mut input, &mut current_line, &mut current_column).unwrap();
+            actual_tokens.push(token);
+        }
+
+        assert_eq!(expected_tokens, actual_tokens);
+    }
+
+    #[test]
+    fn test_die() {
+        let input = "die d 2d4";
+        let mut input = input.chars().peekable();
+
+        let expected_tokens: Vec<Token> = vec![
+            Token::new(TokenType::Literal(LiteralTokenType::Die(true)), 1, 1),
+            Token::new(TokenType::Literal(LiteralTokenType::Die(false)), 1, 5),
+            Token::new(TokenType::Literal(LiteralTokenType::Int(2)), 1, 7),
+            Token::new(TokenType::Literal(LiteralTokenType::Die(false)), 1, 8),
+            Token::new(TokenType::Literal(LiteralTokenType::Int(4)), 1, 9),
         ];
 
         let mut actual_tokens: Vec<Token> = vec![];

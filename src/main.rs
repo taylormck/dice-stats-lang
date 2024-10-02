@@ -1,7 +1,7 @@
 use dice_stats_lang::token;
 
 fn main() {
-    let input = "( ) { } + - * / . ! -1";
+    let input = "( ) { } + - * / . ! -1 die foo d";
     let mut input_chars = input.chars().peekable();
 
     let mut current_line = 1;
