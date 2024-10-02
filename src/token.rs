@@ -2,7 +2,12 @@ use std::{iter::Peekable, str::Chars};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum TokenType {
-    Int(i32),
+    Operator(OperatorTokenType),
+    Literal(LiteralTokenType),
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum OperatorTokenType {
     LeftParen,
     RightParen,
     LeftBrace,
@@ -14,6 +19,12 @@ pub enum TokenType {
     Dot,
     Bang,
     Eof,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum LiteralTokenType {
+    Int(i32),
+    Die(bool),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
@@ -53,31 +64,55 @@ pub fn read_token(
                 None
             }
             '(' => Some(Token::new(
-                TokenType::LeftParen,
+                TokenType::Operator(OperatorTokenType::LeftParen),
                 *current_line,
                 *current_column,
             )),
             ')' => Some(Token::new(
-                TokenType::RightParen,
+                TokenType::Operator(OperatorTokenType::RightParen),
                 *current_line,
                 *current_column,
             )),
             '{' => Some(Token::new(
-                TokenType::LeftBrace,
+                TokenType::Operator(OperatorTokenType::LeftBrace),
                 *current_line,
                 *current_column,
             )),
             '}' => Some(Token::new(
-                TokenType::RightBrace,
+                TokenType::Operator(OperatorTokenType::RightBrace),
                 *current_line,
                 *current_column,
             )),
-            '+' => Some(Token::new(TokenType::Plus, *current_line, *current_column)),
-            '-' => Some(Token::new(TokenType::Minus, *current_line, *current_column)),
-            '*' => Some(Token::new(TokenType::Star, *current_line, *current_column)),
-            '/' => Some(Token::new(TokenType::Slash, *current_line, *current_column)),
-            '.' => Some(Token::new(TokenType::Dot, *current_line, *current_column)),
-            '!' => Some(Token::new(TokenType::Bang, *current_line, *current_column)),
+            '+' => Some(Token::new(
+                TokenType::Operator(OperatorTokenType::Plus),
+                *current_line,
+                *current_column,
+            )),
+            '-' => Some(Token::new(
+                TokenType::Operator(OperatorTokenType::Minus),
+                *current_line,
+                *current_column,
+            )),
+            '*' => Some(Token::new(
+                TokenType::Operator(OperatorTokenType::Star),
+                *current_line,
+                *current_column,
+            )),
+            '/' => Some(Token::new(
+                TokenType::Operator(OperatorTokenType::Slash),
+                *current_line,
+                *current_column,
+            )),
+            '.' => Some(Token::new(
+                TokenType::Operator(OperatorTokenType::Dot),
+                *current_line,
+                *current_column,
+            )),
+            '!' => Some(Token::new(
+                TokenType::Operator(OperatorTokenType::Bang),
+                *current_line,
+                *current_column,
+            )),
             first_digit if first_digit.is_ascii_digit() => {
                 let starting_column = *current_column;
 
@@ -92,7 +127,7 @@ pub fn read_token(
 
                 match n.parse() {
                     Ok(n) => Some(Token::new(
-                        TokenType::Int(n),
+                        TokenType::Literal(LiteralTokenType::Int(n)),
                         *current_line,
                         starting_column,
                     )),
@@ -109,7 +144,11 @@ pub fn read_token(
         }
     }
 
-    Ok(Token::new(TokenType::Eof, *current_line, *current_column))
+    Ok(Token::new(
+        TokenType::Operator(OperatorTokenType::Eof),
+        *current_line,
+        *current_column,
+    ))
 }
 
 #[cfg(test)]
@@ -122,18 +161,18 @@ mod tests {
         let mut input = input.chars().peekable();
 
         let expected_tokens: Vec<Token> = vec![
-            Token::new(TokenType::LeftParen, 1, 1),
-            Token::new(TokenType::RightParen, 1, 3),
-            Token::new(TokenType::LeftBrace, 1, 5),
-            Token::new(TokenType::RightBrace, 1, 7),
-            Token::new(TokenType::Plus, 2, 1),
-            Token::new(TokenType::Minus, 2, 3),
-            Token::new(TokenType::Star, 2, 5),
-            Token::new(TokenType::Slash, 2, 7),
-            Token::new(TokenType::Dot, 3, 1),
-            Token::new(TokenType::Bang, 3, 3),
-            Token::new(TokenType::Minus, 3, 5),
-            Token::new(TokenType::Int(420), 3, 6),
+            Token::new(TokenType::Operator(OperatorTokenType::LeftParen), 1, 1),
+            Token::new(TokenType::Operator(OperatorTokenType::RightParen), 1, 3),
+            Token::new(TokenType::Operator(OperatorTokenType::LeftBrace), 1, 5),
+            Token::new(TokenType::Operator(OperatorTokenType::RightBrace), 1, 7),
+            Token::new(TokenType::Operator(OperatorTokenType::Plus), 2, 1),
+            Token::new(TokenType::Operator(OperatorTokenType::Minus), 2, 3),
+            Token::new(TokenType::Operator(OperatorTokenType::Star), 2, 5),
+            Token::new(TokenType::Operator(OperatorTokenType::Slash), 2, 7),
+            Token::new(TokenType::Operator(OperatorTokenType::Dot), 3, 1),
+            Token::new(TokenType::Operator(OperatorTokenType::Bang), 3, 3),
+            Token::new(TokenType::Operator(OperatorTokenType::Minus), 3, 5),
+            Token::new(TokenType::Literal(LiteralTokenType::Int(420)), 3, 6),
         ];
 
         let mut actual_tokens: Vec<Token> = vec![];
@@ -155,11 +194,11 @@ mod tests {
         let mut input = input.chars().peekable();
 
         let expected_tokens: Vec<Token> = vec![
-            Token::new(TokenType::Int(1), 1, 1),
-            Token::new(TokenType::Int(10), 1, 3),
-            Token::new(TokenType::Int(1234), 1, 6),
-            Token::new(TokenType::Minus, 1, 11),
-            Token::new(TokenType::Int(420), 1, 12),
+            Token::new(TokenType::Literal(LiteralTokenType::Int(1)), 1, 1),
+            Token::new(TokenType::Literal(LiteralTokenType::Int(10)), 1, 3),
+            Token::new(TokenType::Literal(LiteralTokenType::Int(1234)), 1, 6),
+            Token::new(TokenType::Operator(OperatorTokenType::Minus), 1, 11),
+            Token::new(TokenType::Literal(LiteralTokenType::Int(420)), 1, 12),
         ];
 
         let mut actual_tokens: Vec<Token> = vec![];
