@@ -2,12 +2,9 @@ use std::{iter::Peekable, str::Chars};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TokenType {
-    Operator(OperatorTokenType),
-    Literal(LiteralTokenType),
-}
-
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum OperatorTokenType {
+    Int(i32),
+    Die(bool),
+    Unrecognized(String),
     LeftParen,
     RightParen,
     LeftBrace,
@@ -19,13 +16,6 @@ pub enum OperatorTokenType {
     Dot,
     Bang,
     Eof,
-}
-
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub enum LiteralTokenType {
-    Int(i32),
-    Die(bool),
-    Unrecognized(String),
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -65,55 +55,31 @@ pub fn read_token(
                 None
             }
             '(' => Some(Token::new(
-                TokenType::Operator(OperatorTokenType::LeftParen),
+                TokenType::LeftParen,
                 *current_line,
                 *current_column,
             )),
             ')' => Some(Token::new(
-                TokenType::Operator(OperatorTokenType::RightParen),
+                TokenType::RightParen,
                 *current_line,
                 *current_column,
             )),
             '{' => Some(Token::new(
-                TokenType::Operator(OperatorTokenType::LeftBrace),
+                TokenType::LeftBrace,
                 *current_line,
                 *current_column,
             )),
             '}' => Some(Token::new(
-                TokenType::Operator(OperatorTokenType::RightBrace),
+                TokenType::RightBrace,
                 *current_line,
                 *current_column,
             )),
-            '+' => Some(Token::new(
-                TokenType::Operator(OperatorTokenType::Plus),
-                *current_line,
-                *current_column,
-            )),
-            '-' => Some(Token::new(
-                TokenType::Operator(OperatorTokenType::Minus),
-                *current_line,
-                *current_column,
-            )),
-            '*' => Some(Token::new(
-                TokenType::Operator(OperatorTokenType::Star),
-                *current_line,
-                *current_column,
-            )),
-            '/' => Some(Token::new(
-                TokenType::Operator(OperatorTokenType::Slash),
-                *current_line,
-                *current_column,
-            )),
-            '.' => Some(Token::new(
-                TokenType::Operator(OperatorTokenType::Dot),
-                *current_line,
-                *current_column,
-            )),
-            '!' => Some(Token::new(
-                TokenType::Operator(OperatorTokenType::Bang),
-                *current_line,
-                *current_column,
-            )),
+            '+' => Some(Token::new(TokenType::Plus, *current_line, *current_column)),
+            '-' => Some(Token::new(TokenType::Minus, *current_line, *current_column)),
+            '*' => Some(Token::new(TokenType::Star, *current_line, *current_column)),
+            '/' => Some(Token::new(TokenType::Slash, *current_line, *current_column)),
+            '.' => Some(Token::new(TokenType::Dot, *current_line, *current_column)),
+            '!' => Some(Token::new(TokenType::Bang, *current_line, *current_column)),
             first_digit if first_digit.is_ascii_digit() => {
                 let starting_column = *current_column;
 
@@ -128,7 +94,7 @@ pub fn read_token(
 
                 match n.parse() {
                     Ok(n) => Some(Token::new(
-                        TokenType::Literal(LiteralTokenType::Int(n)),
+                        TokenType::Int(n),
                         *current_line,
                         starting_column,
                     )),
@@ -149,17 +115,17 @@ pub fn read_token(
 
                 match literal.as_str() {
                     "d" => Some(Token::new(
-                        TokenType::Literal(LiteralTokenType::Die(false)),
+                        TokenType::Die(false),
                         *current_line,
                         starting_column,
                     )),
                     "die" => Some(Token::new(
-                        TokenType::Literal(LiteralTokenType::Die(true)),
+                        TokenType::Die(true),
                         *current_line,
                         starting_column,
                     )),
                     _ => Some(Token::new(
-                        TokenType::Literal(LiteralTokenType::Unrecognized(literal)),
+                        TokenType::Unrecognized(literal),
                         *current_line,
                         starting_column,
                     )),
@@ -175,11 +141,7 @@ pub fn read_token(
         }
     }
 
-    Ok(Token::new(
-        TokenType::Operator(OperatorTokenType::Eof),
-        *current_line,
-        *current_column,
-    ))
+    Ok(Token::new(TokenType::Eof, *current_line, *current_column))
 }
 
 fn is_keyword_character(c: &char) -> bool {
@@ -196,18 +158,18 @@ mod tests {
         let mut input = input.chars().peekable();
 
         let expected_tokens: Vec<Token> = vec![
-            Token::new(TokenType::Operator(OperatorTokenType::LeftParen), 1, 1),
-            Token::new(TokenType::Operator(OperatorTokenType::RightParen), 1, 3),
-            Token::new(TokenType::Operator(OperatorTokenType::LeftBrace), 1, 5),
-            Token::new(TokenType::Operator(OperatorTokenType::RightBrace), 1, 7),
-            Token::new(TokenType::Operator(OperatorTokenType::Plus), 2, 1),
-            Token::new(TokenType::Operator(OperatorTokenType::Minus), 2, 3),
-            Token::new(TokenType::Operator(OperatorTokenType::Star), 2, 5),
-            Token::new(TokenType::Operator(OperatorTokenType::Slash), 2, 7),
-            Token::new(TokenType::Operator(OperatorTokenType::Dot), 3, 1),
-            Token::new(TokenType::Operator(OperatorTokenType::Bang), 3, 3),
-            Token::new(TokenType::Operator(OperatorTokenType::Minus), 3, 5),
-            Token::new(TokenType::Literal(LiteralTokenType::Int(420)), 3, 6),
+            Token::new(TokenType::LeftParen, 1, 1),
+            Token::new(TokenType::RightParen, 1, 3),
+            Token::new(TokenType::LeftBrace, 1, 5),
+            Token::new(TokenType::RightBrace, 1, 7),
+            Token::new(TokenType::Plus, 2, 1),
+            Token::new(TokenType::Minus, 2, 3),
+            Token::new(TokenType::Star, 2, 5),
+            Token::new(TokenType::Slash, 2, 7),
+            Token::new(TokenType::Dot, 3, 1),
+            Token::new(TokenType::Bang, 3, 3),
+            Token::new(TokenType::Minus, 3, 5),
+            Token::new(TokenType::Int(420), 3, 6),
         ];
 
         let mut actual_tokens: Vec<Token> = vec![];
@@ -229,11 +191,11 @@ mod tests {
         let mut input = input.chars().peekable();
 
         let expected_tokens: Vec<Token> = vec![
-            Token::new(TokenType::Literal(LiteralTokenType::Int(1)), 1, 1),
-            Token::new(TokenType::Literal(LiteralTokenType::Int(10)), 1, 3),
-            Token::new(TokenType::Literal(LiteralTokenType::Int(1234)), 1, 6),
-            Token::new(TokenType::Operator(OperatorTokenType::Minus), 1, 11),
-            Token::new(TokenType::Literal(LiteralTokenType::Int(420)), 1, 12),
+            Token::new(TokenType::Int(1), 1, 1),
+            Token::new(TokenType::Int(10), 1, 3),
+            Token::new(TokenType::Int(1234), 1, 6),
+            Token::new(TokenType::Minus, 1, 11),
+            Token::new(TokenType::Int(420), 1, 12),
         ];
 
         let mut actual_tokens: Vec<Token> = vec![];
@@ -255,11 +217,11 @@ mod tests {
         let mut input = input.chars().peekable();
 
         let expected_tokens: Vec<Token> = vec![
-            Token::new(TokenType::Literal(LiteralTokenType::Die(true)), 1, 1),
-            Token::new(TokenType::Literal(LiteralTokenType::Die(false)), 1, 5),
-            Token::new(TokenType::Literal(LiteralTokenType::Int(2)), 1, 7),
-            Token::new(TokenType::Literal(LiteralTokenType::Die(false)), 1, 8),
-            Token::new(TokenType::Literal(LiteralTokenType::Int(4)), 1, 9),
+            Token::new(TokenType::Die(true), 1, 1),
+            Token::new(TokenType::Die(false), 1, 5),
+            Token::new(TokenType::Int(2), 1, 7),
+            Token::new(TokenType::Die(false), 1, 8),
+            Token::new(TokenType::Int(4), 1, 9),
         ];
 
         let mut actual_tokens: Vec<Token> = vec![];
