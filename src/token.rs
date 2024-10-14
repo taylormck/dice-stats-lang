@@ -4,6 +4,7 @@ use std::{iter::Peekable, str::Chars};
 pub enum TokenType {
     Int(i32),
     Die(bool),
+    Keep(bool),
     Unrecognized(String),
     LeftParen,
     RightParen,
@@ -124,6 +125,16 @@ pub fn read_token(
                         *current_line,
                         starting_column,
                     )),
+                    "k" => Some(Token::new(
+                        TokenType::Keep(false),
+                        *current_line,
+                        starting_column,
+                    )),
+                    "keep" => Some(Token::new(
+                        TokenType::Keep(true),
+                        *current_line,
+                        starting_column,
+                    )),
                     _ => Some(Token::new(
                         TokenType::Unrecognized(literal),
                         *current_line,
@@ -213,7 +224,7 @@ mod tests {
 
     #[test]
     fn test_die() {
-        let input = "die d 2d4";
+        let input = "die d 2d4k6 keep";
         let mut input = input.chars().peekable();
 
         let expected_tokens: Vec<Token> = vec![
@@ -222,6 +233,9 @@ mod tests {
             Token::new(TokenType::Int(2), 1, 7),
             Token::new(TokenType::Die(false), 1, 8),
             Token::new(TokenType::Int(4), 1, 9),
+            Token::new(TokenType::Keep(false), 1, 10),
+            Token::new(TokenType::Int(6), 1, 11),
+            Token::new(TokenType::Keep(true), 1, 13),
         ];
 
         let mut actual_tokens: Vec<Token> = vec![];
