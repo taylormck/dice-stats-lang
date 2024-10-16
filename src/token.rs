@@ -6,6 +6,7 @@ pub enum TokenType {
     Die(bool),
     Keep(bool),
     Drop,
+    Explode,
     Unrecognized(String),
     LeftParen,
     RightParen,
@@ -137,6 +138,11 @@ pub fn read_token(
                         starting_column,
                     )),
                     "drop" => Some(Token::new(TokenType::Drop, *current_line, starting_column)),
+                    "explode" => Some(Token::new(
+                        TokenType::Explode,
+                        *current_line,
+                        starting_column,
+                    )),
                     _ => Some(Token::new(
                         TokenType::Unrecognized(literal),
                         *current_line,
@@ -226,7 +232,7 @@ mod tests {
 
     #[test]
     fn test_die() {
-        let input = "die d 2d4k6 keep drop";
+        let input = "die d 2d4k6 keep drop explode";
         let mut input = input.chars().peekable();
 
         let expected_tokens: Vec<Token> = vec![
@@ -239,6 +245,7 @@ mod tests {
             Token::new(TokenType::Int(6), 1, 11),
             Token::new(TokenType::Keep(true), 1, 13),
             Token::new(TokenType::Drop, 1, 18),
+            Token::new(TokenType::Explode, 1, 23),
         ];
 
         let mut actual_tokens: Vec<Token> = vec![];
