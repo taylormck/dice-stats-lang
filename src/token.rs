@@ -7,6 +7,7 @@ pub enum TokenType {
     Keep(bool),
     Drop,
     Explode,
+    Emphasis,
     Unrecognized(String),
     LeftParen,
     RightParen,
@@ -143,6 +144,11 @@ pub fn read_token(
                         *current_line,
                         starting_column,
                     )),
+                    "emphasis" => Some(Token::new(
+                        TokenType::Emphasis,
+                        *current_line,
+                        starting_column,
+                    )),
                     _ => Some(Token::new(
                         TokenType::Unrecognized(literal),
                         *current_line,
@@ -231,8 +237,8 @@ mod tests {
     }
 
     #[test]
-    fn test_die() {
-        let input = "die d 2d4k6 keep drop explode";
+    fn test_literals() {
+        let input = "die d 2d4k6 keep drop explode emphasis";
         let mut input = input.chars().peekable();
 
         let expected_tokens: Vec<Token> = vec![
@@ -246,6 +252,7 @@ mod tests {
             Token::new(TokenType::Keep(true), 1, 13),
             Token::new(TokenType::Drop, 1, 18),
             Token::new(TokenType::Explode, 1, 23),
+            Token::new(TokenType::Emphasis, 1, 31),
         ];
 
         let mut actual_tokens: Vec<Token> = vec![];
