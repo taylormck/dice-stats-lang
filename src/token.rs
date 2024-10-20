@@ -20,6 +20,11 @@ pub enum TokenType {
     Dot,
     Bang,
     Eof,
+    Less,
+    LessEqual,
+    Greater,
+    GreaterEqual,
+    EqualEqual,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -84,6 +89,14 @@ pub fn read_token(
             '/' => Some(Token::new(TokenType::Slash, *current_line, *current_column)),
             '.' => Some(Token::new(TokenType::Dot, *current_line, *current_column)),
             '!' => Some(Token::new(TokenType::Bang, *current_line, *current_column)),
+            '<' => {
+                let token_type = match input.peek() {
+                    Some('=') => TokenType::LessEqual,
+                    _ => TokenType::Less,
+                };
+
+                Some(Token::new(token_type, *current_line, *current_column))
+            }
             first_digit if first_digit.is_ascii_digit() => {
                 let starting_column = *current_column;
 
